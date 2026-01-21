@@ -38,22 +38,21 @@ with col1:
     company = st.text_input("Name der Zielfirma")
 with col2:
     contact = st.text_input("Ansprechperson (optional)")
-
 if st.button("🔥 Deep Dive Recherche & Matching starten"):
     if not company or not ref_file:
         st.warning("⚠️ Bitte Firmennamen eingeben und Referenz-CSV in der Sidebar hochladen.")
     else:
         with st.spinner('Deep Research aktiv... Scanne Konzernstrukturen und Partner (CH/DACH/Global)...'):
             try:
-                # Referenzen robust als Text einlesen (vermeidet Tokenizing Errors)
+                # Referenzen robust als Text einlesen
                 try:
                     ref_context = ref_file.getvalue().decode("utf-8")
                 except:
                     ref_context = ref_file.getvalue().decode("latin-1")
 
-                # Gemini Pro 1.5 mit SEARCH GROUNDING
+                # WECHSEL AUF GEMINI-1.5-FLASH (Stabiler für Google Search Grounding)
                 model = genai.GenerativeModel(
-                    model_name="gemini-1.5-pro",
+                    model_name="gemini-1.5-flash",
                     tools=[{"google_search_retrieval": {}}] 
                 )
 
@@ -76,17 +75,23 @@ if st.button("🔥 Deep Dive Recherche & Matching starten"):
                 6. 3 FRAGEN: Analytische Fragen für das Meeting.
 
                 WICHTIG: Keine Füllwörter. Keine Einleitung. Nutze Tabellen. Markiere Schätzungen als (est.).
+                Antworte auf Deutsch.
                 """
 
                 response = model.generate_content(prompt)
                 
-                st.markdown("---")
-                st.markdown(f"### Analysebericht: {company}")
-                st.markdown('<div class="report-container">', unsafe_allow_html=True)
-                st.markdown(response.text)
-                st.markdown('</div>', unsafe_allow_html=True)
-                
-                st.download_button("📥 Bericht exportieren", response.text, file_name=f"MP_Report_{company}.md")
+                if response.text:
+                    st.markdown("---")
+                    st.markdown(f"### Analysebericht: {company}")
+                    st.markdown('<div class="report-container">', unsafe_allow_html=True)
+                    st.markdown(response.text)
+                    st.markdown('</div>', unsafe_allow_html=True)
+                    
+                    st.download_button("📥 Bericht exportieren", response.text, file_name=f"MP_Report_{company}.md")
+                else:
+                    st.error("Die KI konnte keine Antwort generieren. Bitte versuche es erneut.")
 
             except Exception as e:
+                # Falls 1.5-flash auch nicht geht, versuchen wir es ohne das Search Tool
                 st.error(f"Fehler während der Analyse: {str(e)}")
+                st.info("Tipp: Überprüfe, ob dein API Key im Google AI Studio unter einem Projekt mit 'Generative AI API' aktiviert wurde.")
