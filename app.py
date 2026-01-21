@@ -45,9 +45,11 @@ if st.button("🔥 Deep Dive Recherche & Matching starten"):
     else:
         with st.spinner('Deep Research aktiv... Scanne Konzernstrukturen und Partner (CH/DACH/Global)...'):
             try:
-                # Referenzen laden
-                df = pd.read_csv(ref_file)
-                ref_context = df.to_string()
+                # Referenzen robust als Text einlesen (vermeidet Tokenizing Errors)
+                try:
+                    ref_context = ref_file.getvalue().decode("utf-8")
+                except:
+                    ref_context = ref_file.getvalue().decode("latin-1")
 
                 # Gemini Pro 1.5 mit SEARCH GROUNDING
                 model = genai.GenerativeModel(
@@ -58,7 +60,10 @@ if st.button("🔥 Deep Dive Recherche & Matching starten"):
                 prompt = f"""
                 Analysiere die Firma '{company}' extrem präzise für Account Manager '{contact}'.
                 Nutze die Google Suche für exakte, aktuelle Daten.
-                Marketingpoint Referenzen: {ref_context}
+                Marketingpoint Referenzen:
+                ---
+                {ref_context}
+                ---
 
                 AUFTRAG: Erstelle ein High-Density Dashboard (maximal 1 Seite).
                 
@@ -67,7 +72,7 @@ if st.button("🔥 Deep Dive Recherche & Matching starten"):
                 2. KPI TABELLE: MA & Umsatz einzeln für CH, DACH, Global.
                 3. BUSINESS & PARTNER: Kern-Fokus & Top 3 Technologie-Partner.
                 4. MP PROOF: Wähle die 3 besten Referenzen aus der Liste. Begründe das Matching (Partner-Identität oder Branchen-Similarity).
-                5. SALES INTEL: Schätze Marktgrösse DACH, Deal-Size, Cycle.
+                5. SALES INTEL: Schätze Marktgrösse DACH (Anzahl Firmen), Deal-Size, Cycle.
                 6. 3 FRAGEN: Analytische Fragen für das Meeting.
 
                 WICHTIG: Keine Füllwörter. Keine Einleitung. Nutze Tabellen. Markiere Schätzungen als (est.).
@@ -85,6 +90,3 @@ if st.button("🔥 Deep Dive Recherche & Matching starten"):
 
             except Exception as e:
                 st.error(f"Fehler während der Analyse: {str(e)}")
-
-st.markdown("---")
-st.caption("Powered by Marketingpoint AI | Gemini 1.5 Pro Search Engine")
