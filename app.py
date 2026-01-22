@@ -5,6 +5,7 @@ import google.generativeai as genai
 # UI DESIGN
 st.set_page_config(page_title="MP Intel Agent", layout="wide", initial_sidebar_state="expanded")
 
+# CSS für den Profi-Look
 st.markdown("""
     <style>
     .main { background-color: #f0f2f6; }
@@ -50,37 +51,33 @@ if st.button("🔥 Deep Dive Recherche & Matching starten"):
                 except:
                     ref_context = ref_file.getvalue().decode("latin-1")
 
-                # PROMPT DEFINITION
+                # PROMPT: Wir weisen die KI an, ihr Wissen über den Schweizer Markt zu nutzen
                 prompt = f"""
                 Analysiere die Firma '{company}' für Account Manager '{contact}'.
-                Nutze dein Wissen über den Schweizer Markt.
-                Marketingpoint Referenzliste:
+                
+                AUFGABE:
+                1. Identifiziere die Konzernstruktur (Mutterhaus?).
+                2. Erstelle eine Tabelle mit Mitarbeiterzahlen & Umsatz für CH, DACH, Global.
+                3. Analysiere das Kern-Business & identifiziere die Top 3 Technologie-Partner.
+                
+                MATCHING MIT DIESEN REFERENZEN:
                 ---
                 {ref_context}
                 ---
 
-                AUFTRAG: Erstelle ein High-Density Dashboard.
-                1. KONZERN: Mutterhaus/Holding?
-                2. KPI TABELLE: MA & Umsatz für CH, DACH, Global.
-                3. BUSINESS: Kern-Fokus & Top 3 Partner.
-                4. MP PROOF: Wähle 3 passende Referenzen aus der Liste oben und begründe das Matching.
-                5. SALES INTEL: Marktgrösse DACH, Deal-Size, Cycle.
-                6. 3 FRAGEN: Analytische Fragen für das Meeting.
+                BERICHTS-STRUKTUR:
+                - Nutze Tabellen für KPIs.
+                - Wähle die 3 passendsten Referenzen und begründe das Matching präzise.
+                - Schätze Marktgrösse DACH, Deal-Size und Sales Cycle.
+                - Erstelle 3 analytische Fragen für das Meeting.
                 
-                Antworte kurz, tabellarisch und auf Deutsch. Erfinde keine Fakten.
+                Antworte kurz, faktenorientiert und auf Deutsch.
                 """
 
-                # VERSUCH 1: Mit Google Search Tool (Grounding)
-                try:
-                    model = genai.GenerativeModel(
-                        model_name="gemini-1.5-flash",
-                        tools=[{"google_search_retrieval": {}}]
-                    )
-                    response = model.generate_content(prompt)
-                except:
-                    # FALLBACK: Ohne Search Tool (falls regional gesperrt)
-                    model = genai.GenerativeModel(model_name="gemini-1.5-flash")
-                    response = model.generate_content(f"Recherchiere im Internet zu {company} und dann: {prompt}")
+                # Wir nutzen hier den stabilsten Aufruf ohne das "Search Tool", 
+                # da dies den 404 Fehler in der Schweiz oft auslöst.
+                model = genai.GenerativeModel('gemini-1.5-flash')
+                response = model.generate_content(prompt)
 
                 # AUSGABE
                 st.markdown("---")
@@ -95,4 +92,4 @@ if st.button("🔥 Deep Dive Recherche & Matching starten"):
                 st.error(f"Fehler: {str(e)}")
 
 st.markdown("---")
-st.caption("Powered by Marketingpoint AI | Gemini 1.5 Flash")
+st.caption("Powered by Marketingpoint AI | Gemini Engine")
