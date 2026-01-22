@@ -2,80 +2,82 @@ import streamlit as st
 import pandas as pd
 import google.generativeai as genai
 
-# UI DESIGN
+# 1. UI DESIGN (Marketingpoint Style)
 st.set_page_config(page_title="MP Intel Agent", layout="wide")
 
 st.markdown("""
     <style>
-    .main { background-color: #f0f2f6; }
-    .stButton>button { border-radius: 10px; background-color: #d32f2f; color: white; height: 3em; width: 100%; font-weight: bold; }
-    .report-container { background-color: white; padding: 25px; border-radius: 15px; border: 1px solid #e0e0e0; color: black; }
+    .main { background-color: #f8f9fa; }
+    .stButton>button { 
+        border-radius: 10px; 
+        background-color: #d32f2f; 
+        color: white; 
+        height: 3.5em; 
+        width: 100%; 
+        font-weight: bold;
+        border: none;
+    }
+    .report-container { 
+        background-color: white; 
+        padding: 30px; 
+        border-radius: 15px; 
+        border: 1px solid #e0e0e0; 
+        color: #1e1e1e;
+        line-height: 1.6;
+    }
+    h3 { color: #d32f2f; }
     </style>
     """, unsafe_allow_html=True)
 
-# API SETUP
+# 2. API SETUP
 if "GEMINI_API_KEY" in st.secrets:
     genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
 else:
-    st.error("API Key fehlt in den Streamlit Secrets!")
+    st.error("API Key fehlt! Bitte in den Streamlit Secrets hinterlegen.")
 
-# SIDEBAR
+# 3. SIDEBAR
 with st.sidebar:
     st.title("🛡️ Marketingpoint")
+    st.subheader("Wissensbasis")
     ref_file = st.file_uploader("Referenzliste (CSV) hochladen", type="csv")
-    st.info("Lade deine CSV hoch, um das Matching zu aktivieren.")
+    st.divider()
+    st.info("Tipp: Nutze eine CSV mit Firmenname und Branche für bestes Matching.")
 
-# MAIN
+# 4. MAIN INTERFACE
 st.title("🏢 Swiss Company Intelligence")
+st.markdown("Dein strategisches Briefing für Neukundentermine.")
 
 col1, col2 = st.columns(2)
 with col1:
-    company = st.text_input("Firmenname", placeholder="z.B. LOXY International AG")
+    company = st.text_input("Name der Zielfirma", placeholder="z.B. LOXY International AG")
 with col2:
-    contact = st.text_input("Ansprechperson")
+    contact = st.text_input("Ansprechperson", placeholder="z.B. Daniel Schnyder")
 
-if st.button("Analyse starten"):
+if st.button("🚀 Analyse & Matching starten"):
     if not company or not ref_file:
-        st.warning("Bitte Firma eingeben und CSV hochladen.")
+        st.warning("⚠️ Bitte gib einen Firmennamen ein und lade deine Referenz-CSV hoch.")
     else:
-        with st.spinner('Analysiere...'):
+        with st.spinner('KI generiert Analyse...'):
             try:
-                # CSV laden
+                # CSV einlesen
                 try:
-                    ref_text = ref_file.getvalue().decode("utf-8")
+                    ref_content = ref_file.getvalue().decode("utf-8")
                 except:
-                    ref_text = ref_file.getvalue().decode("latin-1")
+                    ref_context = ref_file.getvalue().decode("latin-1")
 
-                # STABILES MODELL OHNE SEARCH-TOOL (Verhindert 404)
+                # DAS MODELL (Wir nutzen den stabilen Standard-Aufruf ohne 404-anfällige Tools)
                 model = genai.GenerativeModel('gemini-1.5-flash')
                 
                 prompt = f"""
-                Du bist ein Sales-Experte für Marketingpoint AG. 
-                Analysiere die Firma: {company}
+                Du bist ein Senior Sales Analyst für die Marketingpoint AG.
+                Ziel: Bereite Account Manager auf einen Termin mit '{company}' vor.
                 Ansprechpartner: {contact}
 
-                REFERENZLISTE MARKETINGPOINT:
-                {ref_text}
+                HIER IST UNSERE REFERENZLISTE (Gleiche sie mit der Zielfirma ab):
+                {ref_content}
 
-                DEINE AUFGABE:
-                1. Beschreibe kurz das Business & Mutterhaus der Zielfirma.
-                2. Erstelle eine Tabelle: Mitarbeiter & Umsatz (CH, DACH, Global).
-                3. Suche die 3 besten Referenzen aus der Liste oben, die zu dieser Firma passen (Branche/Partner).
-                4. Schätze: Marktgröße DACH, Deal-Size, Sales Cycle.
-                5. Erstelle 3 analytische Fragen für das Meeting.
-
-                Antworte kurz, tabellarisch und auf Deutsch.
-                """
-
-                response = model.generate_content(prompt)
-                
-                st.markdown("---")
-                st.markdown(f"### Ergebnisse für {company}")
-                st.markdown('<div class="report-container">', unsafe_allow_html=True)
-                st.markdown(response.text)
-                st.markdown('</div>', unsafe_allow_html=True)
-
-            except Exception as e:
-                st.error(f"Ein Fehler ist aufgetreten: {str(e)}")
-
-st.caption("Powered by Marketingpoint AI")
+                DEIN AUFTRAG (Erstelle ein kompaktes Dashboard):
+                1. KONZERN: Wer ist das Mutterhaus? (Falls Tochtergesellschaft).
+                2. KPI TABELLE: Mitarbeiter & Umsatz für CH, DACH, Global separat auflisten.
+                3. BUSINESS: Kern-Business in 3 Stichworten & Top 3 Technologie-Partner.
+                4. MATCHING: Wähle die 3 besten Referenzen aus unserer Liste oben. Begründe kurz, warum sie perfekt zu '{company}' passen (z.B. gleiches Partne
